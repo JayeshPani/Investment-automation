@@ -1,0 +1,33 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Investment Automation</title>
+  <style>
+    body { margin:0; font-family: Inter, system-ui, sans-serif; background:#0b1220; color:#e5e7eb; }
+    .top { padding:16px 20px; border-bottom:1px solid #263244; display:flex; gap:12px; align-items:center; }
+    input { flex:1; background:#0f172a; color:#e5e7eb; border:1px solid #334155; padding:10px; border-radius:8px; }
+    button { background:#166534; color:white; border:none; padding:10px 14px; border-radius:8px; cursor:pointer; }
+    iframe { width:100%; height:calc(100vh - 74px); border:none; background:#0b1220; }
+  </style>
+</head>
+<body>
+  <div class="top">
+    <input id="backend" placeholder="Render backend URL (https://...onrender.com)" />
+    <button onclick="loadApp()">Load Backend App</button>
+  </div>
+  <iframe id="appFrame"></iframe>
+  <script>
+    const qs = new URLSearchParams(window.location.search);
+    const initial = qs.get("backend") || "";
+    document.getElementById("backend").value = initial;
+    if (initial) document.getElementById("appFrame").src = initial;
+    function loadApp() {
+      const url = document.getElementById("backend").value.trim();
+      if (!url) return alert("Enter backend URL first.");
+      document.getElementById("appFrame").src = url;
+    }
+  </script>
+</body>
+</html>
