@@ -1,0 +1,94 @@
+get_company_news:
+  description: >
+    Collect recent news for {company_name} ({ticker}) in the {market} market
+    for the last {news_lookback_days} days. Enforce source hierarchy:
+    global mode prioritizes Reuters/Bloomberg/WSJ; india mode prioritizes
+    Economic Times/Moneycontrol/Mint/Business Standard/Reuters. If priority
+    coverage is sparse, use broad fallback and mark lower confidence. Extract
+    article-level catalyst tags (earnings, guidance, regulation, litigation,
+    M&A, funding/capex, macro exposure, management changes, product launches),
+    directional impact (bullish/bearish/mixed/uncertain), recency bucket
+    (0-7d, 8-30d, >30d), and source reliability signals.
+  expected_output: >
+    Compact JSON with keys: ticker, company_name, market, lookback_days,
+    priority_domains, priority_results_count, total_results_count,
+    fallback_used, source_confidence, articles, and data_quality_notes.
+    Include optional keys when derivable: news_signal_score,
+    risk_headline_ratio, catalyst_breakdown, recency_breakdown,
+    source_reliability_score, evidence_priority.
+  agent: news_info_explorer
+  async_execution: true
+
+get_company_financials:
+  description: >
+    Gather structured financial evidence for {company_name} ({ticker}) in the
+    {market} market using company metadata and financial statements tools.
+    Include complete raw fundamentals and statement metrics plus derived ratios.
+    Use available fields to compute debt_to_assets, liability_to_assets,
+    operating_cf_to_net_income, fcf_to_net_income, valuation_spread_pct, and
+    earnings_quality_flag. If any metric is missing, return N/A and explicitly
+    note the gap.
+  expected_output: >
+    Compact JSON containing company profile metrics, annual and quarterly
+    statement summaries, key growth deltas, and data_quality_notes.
+    Include optional keys when derivable: derived_metrics,
+    metric_coverage_score (0-100), financial_strength_flags, valuation_flags.
+  agent: data_explorer
+  async_execution: true
+
+analyze_company:
+  description: >
+    Synthesize upstream news and financial outputs into a metric-weighted
+    institutional equity analysis. Every major conclusion must cite at least one
+    metric or news signal. Include scenario probabilities (Bull/Base/Bear),
+    contradictions between qualitative and quantitative evidence, and an
+    assumptions ledger with invalidation triggers.
+  expected_output: >
+    Markdown with sections:
+    Executive Summary,
+    Investment Scorecard,
+    News Synthesis,
+    Financial Analysis,
+    Integrated Thesis,
+    Scenario Analysis,
+    Evidence Table,
+    Assumptions Ledger,
+    Key Risks,
+    Data Gaps.
+  agent: analyst
+  context:
+    - get_company_news
+    - get_company_financials
+
+advise_investment:
+  description: >
+    Produce the final recommendation for a {investor_profile} investor and an
+    analysis horizon of {analysis_horizon_days} days in the {market} market.
+    Use latest stock price context from tools and provide a risk-scored
+    recommendation with explicit methodology and metric traceability.
+    Decision methodology must include:
+    Total Score = 0.5 * Fundamental Score + 0.5 * News/Catalyst Score.
+    Apply fixed thresholds:
+    Invest >= 70, Hold 50-69, Do Not Invest < 50.
+  expected_output: >
+    Markdown with exact sections:
+    Decision (Invest/Do Not Invest/Hold),
+    Confidence (0-100),
+    Time Horizon View (30/90/365 days),
+    Bull Case,
+    Bear Case,
+    Key Risks,
+    Risk Controls,
+    Data Gaps,
+    Disclaimer.
+    Disclaimer must include: This is informational analysis, not financial advice.
+    After the required sections above, append advanced sections:
+    Investment Scorecard,
+    Metrics Used in Decision,
+    Evidence Table,
+    Assumptions Ledger,
+    Catalyst Timeline,
+    Monitoring Triggers.
+  agent: fin_expert
+  context:
+    - analyze_company
