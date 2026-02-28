@@ -181,8 +181,10 @@
   </div>
 
   <script>
+    const DEFAULT_BACKEND_URL = "https://investment-automation-backend.onrender.com";
     const qs = new URLSearchParams(window.location.search);
-    const initial = qs.get("backend") || "";
+    const storedBackend = localStorage.getItem("investment_backend_url") || "";
+    const initial = qs.get("backend") || storedBackend || DEFAULT_BACKEND_URL;
     const backendInput = document.getElementById("backend");
     const appFrame = document.getElementById("appFrame");
     const placeholder = document.getElementById("framePlaceholder");
@@ -197,9 +199,25 @@
       }
     }
 
+    function persistBackendUrl(url) {
+      try {
+        localStorage.setItem("investment_backend_url", url);
+      } catch (error) {
+        // Ignore storage failures in restricted/private browser contexts.
+      }
+    }
+
+    function syncBackendParam(url) {
+      const updated = new URL(window.location.href);
+      updated.searchParams.set("backend", url);
+      window.history.replaceState({}, "", updated.toString());
+    }
+
     if (initial) {
       backendInput.value = initial;
       appFrame.src = initial;
+      persistBackendUrl(initial);
+      syncBackendParam(initial);
       updateFrameVisibility(true);
     }
 
@@ -211,6 +229,8 @@
       }
       const fullUrl = url.startsWith('http') ? url : `https://${url}`;
       appFrame.src = fullUrl;
+      persistBackendUrl(fullUrl);
+      syncBackendParam(fullUrl);
       updateFrameVisibility(true);
     };
 
